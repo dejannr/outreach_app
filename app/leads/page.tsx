@@ -2,9 +2,11 @@ import Link from "next/link";
 import { LeadStatus } from "@prisma/client";
 
 import { EmptyState } from "@/components/empty-state";
+import { QuickLeadForm } from "@/components/forms/quick-lead-form";
 import { LeadTable } from "@/components/lead-table";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { prisma } from "@/lib/prisma";
@@ -65,6 +67,18 @@ export default async function LeadsPage({
           </>
         }
       />
+
+      <Card className="space-y-3">
+        <div>
+          <h2 className="text-base font-semibold text-[var(--ink)]">
+            Quick Add Lead
+          </h2>
+          <p className="text-sm text-[var(--muted)]">
+            Add a lead without leaving the page.
+          </p>
+        </div>
+        <QuickLeadForm />
+      </Card>
 
       <form className="grid gap-3 rounded-xl border bg-white p-4 md:grid-cols-4">
         <Input name="q" placeholder="Search company, contact, email, or phone" defaultValue={query} className="md:col-span-2" />

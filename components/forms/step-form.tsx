@@ -1,9 +1,9 @@
 "use client";
 
 import { StepChannel } from "@prisma/client";
-import { startTransition } from "react";
+import { startTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 
@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { stepSchema } from "@/lib/validations";
+import { defaultStepContent } from "@/lib/workflow-defaults";
 
 type StepFormProps = {
   scriptVersionId: string;
@@ -52,8 +53,27 @@ export function StepForm({ scriptVersionId, stepId, defaults }: StepFormProps) {
       sortOrder: defaults?.sortOrder || 0,
       isStartStep: defaults?.isStartStep || false,
       isTerminalStep: defaults?.isTerminalStep || false,
+      useCommonOutcomes: !stepId,
     },
   });
+  const channel = useWatch({ control: form.control, name: "channel" });
+
+  useEffect(() => {
+    if (stepId) {
+      return;
+    }
+
+    const defaultsForChannel = defaultStepContent(channel);
+    if (!form.getValues("scriptText")) {
+      form.setValue("scriptText", defaultsForChannel.scriptText);
+    }
+    if (!form.getValues("instructions")) {
+      form.setValue("instructions", defaultsForChannel.instructions);
+    }
+    if (!form.getValues("subject") && defaultsForChannel.subject) {
+      form.setValue("subject", defaultsForChannel.subject);
+    }
+  }, [channel, form, stepId]);
 
   return (
     <form
@@ -81,29 +101,47 @@ export function StepForm({ scriptVersionId, stepId, defaults }: StepFormProps) {
             </option>
           ))}
         </Select>
-        <Input placeholder="Step key" {...form.register("key")} />
-        <Input placeholder="Metric key" {...form.register("metricKey")} />
-        <Input placeholder="Subject" {...form.register("subject")} />
-        <Input
-          type="number"
-          min={0}
-          placeholder="Default delay days"
-          {...form.register("defaultDelayDays")}
-        />
-        <Input type="number" min={0} placeholder="Sort order" {...form.register("sortOrder")} />
+        {channel === StepChannel.EMAIL ? (
+          <Input placeholder="Subject line" {...form.register("subject")} />
+        ) : null}
       </div>
       <Textarea placeholder="Script text" {...form.register("scriptText")} className="min-h-72" />
       <Textarea placeholder="Instructions" {...form.register("instructions")} />
-      <div className="flex flex-wrap gap-4 text-sm">
-        <label className="flex items-center gap-2">
-          <input type="checkbox" {...form.register("isStartStep")} />
-          Start step
+      {!stepId ? (
+        <label className="flex items-center gap-2 text-sm text-[var(--muted-strong)]">
+          <input type="checkbox" {...form.register("useCommonOutcomes")} />
+          Use common outcomes for this channel
         </label>
-        <label className="flex items-center gap-2">
-          <input type="checkbox" {...form.register("isTerminalStep")} />
-          Terminal step
-        </label>
-      </div>
+      ) : null}
+      <details className="rounded-lg border bg-[var(--surface-subtle)] p-4">
+        <summary className="cursor-pointer text-sm font-medium text-[var(--ink)]">
+          Advanced step settings
+        </summary>
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
+          <Input placeholder="Step key" {...form.register("key")} />
+          <Input placeholder="Metric key" {...form.register("metricKey")} />
+          <Input
+            type="number"
+            min={0}
+            placeholder="Default delay days"
+            {...form.register("defaultDelayDays")}
+          />
+          <Input
+            type="number"
+            min={0}
+            placeholder="Sort order"
+            {...form.register("sortOrder")}
+          />
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" {...form.register("isStartStep")} />
+            Start step
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" {...form.register("isTerminalStep")} />
+            Terminal step
+          </label>
+        </div>
+      </details>
       <Button type="submit">{stepId ? "Update step" : "Create step"}</Button>
     </form>
   );

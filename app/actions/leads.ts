@@ -16,6 +16,27 @@ import {
 } from "@/lib/validations";
 import { createManualTask, manualOverrideLead, startLead } from "@/lib/workflow";
 
+function normalizeLeadImportRecord(record: Record<string, string>) {
+  const get = (...keys: string[]) => {
+    for (const key of keys) {
+      if (record[key] !== undefined) {
+        return record[key];
+      }
+    }
+    return "";
+  };
+
+  return {
+    companyName: get("companyName", "company", "company_name", "business"),
+    contactName: get("contactName", "contact", "name", "person"),
+    email: get("email", "emailAddress"),
+    phone: get("phone", "phoneNumber", "mobile"),
+    role: get("role", "title"),
+    website: get("website", "url"),
+    source: get("source"),
+  };
+}
+
 export async function createLead(input: unknown) {
   const parsed = leadSchema.safeParse(input);
   if (!parsed.success) {
@@ -86,9 +107,10 @@ export async function importLeads(input: { csv: string }) {
   const skipped: string[] = [];
 
   for (const record of records) {
-    const parsed = leadImportRowSchema.safeParse(record);
+    const normalized = normalizeLeadImportRecord(record);
+    const parsed = leadImportRowSchema.safeParse(normalized);
     if (!parsed.success) {
-      skipped.push(record.companyName || "Unknown row");
+      skipped.push(normalized.companyName || "Unknown row");
       continue;
     }
 

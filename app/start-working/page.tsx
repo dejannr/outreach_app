@@ -80,6 +80,24 @@ export default async function StartWorkingPage() {
   const highValueTasks = tasks.filter((task) =>
     task.step ? HIGH_VALUE_CHANNELS.includes(task.step.channel) : false,
   );
+  const overdueHighValueTasks = overdueTasks.filter((task) =>
+    task.step ? HIGH_VALUE_CHANNELS.includes(task.step.channel) : false,
+  );
+  const overdueNormalTasks = overdueTasks.filter(
+    (task) => !overdueHighValueTasks.some((item) => item.id === task.id),
+  );
+  const dueTodayHighValueTasks = dueTodayTasks.filter((task) =>
+    task.step ? HIGH_VALUE_CHANNELS.includes(task.step.channel) : false,
+  );
+  const dueTodayNormalTasks = dueTodayTasks.filter(
+    (task) => !dueTodayHighValueTasks.some((item) => item.id === task.id),
+  );
+  const recommendedTask =
+    overdueHighValueTasks[0] ||
+    overdueNormalTasks[0] ||
+    dueTodayHighValueTasks[0] ||
+    dueTodayNormalTasks[0] ||
+    null;
 
   const summary = [
     { label: "Overdue tasks", value: overdueTasks.length },
@@ -142,6 +160,15 @@ export default async function StartWorkingPage() {
           </Card>
         ))}
       </div>
+
+      {recommendedTask ? (
+        <Card className="space-y-2">
+          <p className="text-sm font-medium text-[var(--ink)]">Next recommended task</p>
+          <p className="text-sm text-[var(--muted)]">
+            {recommendedTask.title} for {recommendedTask.lead.companyName}
+          </p>
+        </Card>
+      ) : null}
 
       <section className="space-y-4">
         <div className="flex items-center gap-2">

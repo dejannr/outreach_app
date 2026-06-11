@@ -14,6 +14,7 @@ import { addDays } from "date-fns";
 import {
   APP_SETTING_KEYS,
   HIGH_VALUE_CHANNELS,
+  STEP_CHANNEL_LABELS,
 } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
 
@@ -32,6 +33,27 @@ function getTaskPriority(channel?: StepChannel, dueAt?: Date) {
   }
 
   return TaskPriority.NORMAL;
+}
+
+function buildTaskTitle(step: ScriptStep, lead?: { contactName?: string | null }) {
+  switch (step.channel) {
+    case StepChannel.EMAIL:
+      return `Send ${step.name}`;
+    case StepChannel.PHONE:
+      return `Call ${lead?.contactName?.trim() || step.name}`;
+    case StepChannel.DEMO:
+      return "Run Demo";
+    case StepChannel.DOCUMENT_REQUEST:
+      return "Request Documents";
+    case StepChannel.LOOM:
+      return "Send Loom Follow-Up";
+    case StepChannel.CLOSE:
+      return `Close: ${step.name}`;
+    case StepChannel.BREAKUP:
+      return `Send ${step.name}`;
+    default:
+      return `${STEP_CHANNEL_LABELS[step.channel]}: ${step.name}`;
+  }
 }
 
 function buildStepSnapshot(step?: ScriptStep | null) {
@@ -81,6 +103,7 @@ async function createTaskForStep(
     step: ScriptStep;
     dueAt: Date;
     description?: string | null;
+    leadContactName?: string | null;
   },
 ) {
   const task = await tx.task.create({
@@ -88,7 +111,7 @@ async function createTaskForStep(
       leadId: input.leadId,
       userId: input.userId,
       stepId: input.step.id,
-      title: input.step.name,
+      title: buildTaskTitle(input.step, { contactName: input.leadContactName }),
       description: input.description ?? input.step.instructions,
       dueAt: input.dueAt,
       priority: getTaskPriority(input.step.channel, input.dueAt),
@@ -193,6 +216,7 @@ export async function startLead(leadId: string, userId?: string) {
       userId,
       step: startStep,
       dueAt: now,
+      leadContactName: lead.contactName,
     });
 
     await createActivityAndJourneyEvent(tx, {
@@ -387,6 +411,7 @@ export async function completeTaskWithOutcome(input: {
       userId: input.userId,
       step: nextStep,
       dueAt,
+      leadContactName: task.lead.contactName,
     });
 
     await createActivityAndJourneyEvent(tx, {
@@ -626,6 +651,7 @@ export async function completeTaskWithCustomOutcome(input: {
           userId: input.userId,
           step,
           dueAt: now,
+          leadContactName: task.lead.contactName,
         });
 
         await tx.lead.update({
