@@ -1,3 +1,5 @@
+"use client";
+
 import type { LeadStatus, StepChannel } from "@prisma/client";
 
 import { OutcomeButtons } from "@/components/outcome-buttons";
