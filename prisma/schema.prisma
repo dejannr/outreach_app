@@ -1,0 +1,326 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum LeadStatus {
+  NEW
+  ACTIVE
+  WAITING
+  DEMO_BOOKED
+  DOCUMENTS_REQUESTED
+  DOCUMENTS_RECEIVED
+  LOOM_SENT
+  PILOT_PROPOSED
+  CLOSED_WON
+  CLOSED_LOST
+  DISQUALIFIED
+  NOT_INTERESTED
+  PAUSED
+}
+
+enum TaskStatus {
+  OPEN
+  COMPLETED
+  CANCELLED
+  SKIPPED
+}
+
+enum TaskPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum StepChannel {
+  EMAIL
+  PHONE
+  VOICEMAIL
+  DEMO
+  DOCUMENT_REQUEST
+  LOOM
+  MANUAL
+  CLOSE
+  BREAKUP
+}
+
+enum JourneyEventType {
+  LEAD_STARTED
+  STEP_ENTERED
+  TASK_CREATED
+  TASK_COMPLETED
+  OUTCOME_SELECTED
+  NEXT_STEP_SCHEDULED
+  TERMINAL_REACHED
+  MANUAL_OVERRIDE
+  CUSTOM_OUTCOME_SELECTED
+  SCRIPT_VERSION_MIGRATED
+  CLOSED_WON
+  CLOSED_LOST
+  DISQUALIFIED
+}
+
+enum ActivityType {
+  LEAD_CREATED
+  LEAD_STARTED
+  TASK_CREATED
+  TASK_COMPLETED
+  OUTCOME_SELECTED
+  EMAIL_SENT
+  PHONE_CALL
+  VOICEMAIL_LEFT
+  DEMO_BOOKED
+  DOCUMENTS_REQUESTED
+  DOCUMENTS_RECEIVED
+  LOOM_SENT
+  PILOT_PROPOSED
+  STATUS_CHANGED
+  NOTE_ADDED
+  MANUAL_OVERRIDE
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  leads         Lead[]
+  scripts       Script[]
+  tasks         Task[]
+  activities    Activity[]
+  journeyEvents JourneyEvent[]
+  notes         Note[]
+}
+
+model AppSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Script {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  createdById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  createdBy User?           @relation(fields: [createdById], references: [id])
+  versions  ScriptVersion[]
+}
+
+model ScriptVersion {
+  id          String   @id @default(cuid())
+  scriptId    String
+  version     Int
+  name        String
+  description String?
+  isActive    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  script Script @relation(fields: [scriptId], references: [id], onDelete: Cascade)
+  steps  ScriptStep[]
+  leads  Lead[]
+
+  @@unique([scriptId, version])
+}
+
+model ScriptStep {
+  id               String      @id @default(cuid())
+  scriptVersionId  String
+  key              String
+  metricKey        String
+  name             String
+  channel          StepChannel
+  subject          String?
+  scriptText       String
+  instructions     String?
+  sortOrder        Int         @default(0)
+  isStartStep      Boolean     @default(false)
+  isTerminalStep   Boolean     @default(false)
+  defaultDelayDays Int         @default(0)
+  isArchived       Boolean     @default(false)
+  positionX        Float?
+  positionY        Float?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  scriptVersion ScriptVersion  @relation(fields: [scriptVersionId], references: [id], onDelete: Cascade)
+  outcomesFrom  ScriptOutcome[] @relation("StepOutcomes")
+  outcomesTo    ScriptOutcome[] @relation("NextStep")
+  tasks         Task[]
+  currentLeads  Lead[]         @relation("LeadCurrentStep")
+
+  @@index([scriptVersionId])
+  @@index([metricKey])
+  @@unique([scriptVersionId, key])
+}
+
+model ScriptOutcome {
+  id               String      @id @default(cuid())
+  stepId           String
+  label            String
+  key              String
+  metricKey        String
+  description      String?
+  nextStepId       String?
+  delayDays        Int         @default(0)
+  setLeadStatus    LeadStatus?
+  isTerminal       Boolean     @default(false)
+  isArchived       Boolean     @default(false)
+  requiresNote     Boolean     @default(false)
+  requiresDateTime Boolean     @default(false)
+  requiresContact  Boolean     @default(false)
+  sortOrder        Int         @default(0)
+  metadata         Json?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  step           ScriptStep   @relation("StepOutcomes", fields: [stepId], references: [id], onDelete: Cascade)
+  nextStep       ScriptStep?  @relation("NextStep", fields: [nextStepId], references: [id])
+  completedTasks Task[]       @relation("CompletedOutcome")
+
+  @@index([stepId])
+  @@index([nextStepId])
+  @@index([metricKey])
+  @@unique([stepId, key])
+}
+
+model Lead {
+  id               String      @id @default(cuid())
+  ownerId          String?
+  scriptVersionId  String?
+  companyName      String
+  contactName      String?
+  email            String?
+  phone            String?
+  role             String?
+  website          String?
+  source           String?
+  status           LeadStatus  @default(NEW)
+  currentStepId    String?
+  nextTaskAt       DateTime?
+  lastContactedAt  DateTime?
+  startedAt        DateTime?
+  completedAt      DateTime?
+  tags             Json?
+  customFields     Json?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  owner         User?          @relation(fields: [ownerId], references: [id])
+  scriptVersion ScriptVersion? @relation(fields: [scriptVersionId], references: [id])
+  currentStep   ScriptStep?    @relation("LeadCurrentStep", fields: [currentStepId], references: [id])
+
+  tasks         Task[]
+  activities    Activity[]
+  journeyEvents JourneyEvent[]
+  notes         Note[]
+
+  @@index([status])
+  @@index([nextTaskAt])
+  @@index([companyName])
+  @@index([email])
+}
+
+model Task {
+  id                 String       @id @default(cuid())
+  leadId             String
+  userId             String?
+  stepId             String?
+  title              String
+  description        String?
+  dueAt              DateTime
+  status             TaskStatus   @default(OPEN)
+  priority           TaskPriority @default(NORMAL)
+  completedAt        DateTime?
+  completedOutcomeId String?
+  completedNote      String?
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+
+  lead             Lead           @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  user             User?          @relation(fields: [userId], references: [id])
+  step             ScriptStep?    @relation(fields: [stepId], references: [id])
+  completedOutcome ScriptOutcome? @relation("CompletedOutcome", fields: [completedOutcomeId], references: [id])
+
+  @@index([dueAt])
+  @@index([status])
+  @@index([leadId])
+}
+
+model Activity {
+  id        String       @id @default(cuid())
+  leadId    String
+  userId    String?
+  type      ActivityType
+  title     String
+  body      String?
+  metadata  Json?
+  createdAt DateTime     @default(now())
+
+  lead Lead  @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([leadId])
+  @@index([createdAt])
+}
+
+model JourneyEvent {
+  id                           String           @id @default(cuid())
+  leadId                       String
+  userId                       String?
+  type                         JourneyEventType
+  scriptVersionIdSnapshot      String?
+  scriptVersionNumberSnapshot  Int?
+  stepIdSnapshot               String?
+  stepKey                      String?
+  stepMetricKey                String?
+  stepNameSnapshot             String?
+  outcomeIdSnapshot            String?
+  outcomeKey                   String?
+  outcomeMetricKey             String?
+  outcomeLabelSnapshot         String?
+  leadStatusSnapshot           LeadStatus?
+  title                        String
+  body                         String?
+  metadata                     Json?
+  occurredAt                   DateTime         @default(now())
+
+  lead Lead  @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([leadId])
+  @@index([type])
+  @@index([stepKey])
+  @@index([stepMetricKey])
+  @@index([outcomeKey])
+  @@index([outcomeMetricKey])
+  @@index([occurredAt])
+}
+
+model Note {
+  id        String   @id @default(cuid())
+  leadId    String
+  userId    String?
+  body      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  lead Lead  @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([leadId])
+}

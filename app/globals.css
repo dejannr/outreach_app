@@ -1,0 +1,59 @@
+@import "tailwindcss";
+
+:root {
+  --app-bg: #f4f2ea;
+  --ink: #1e221c;
+  --card: #fffdf7;
+  --card-strong: #f0ead8;
+  --line: #d7ceb8;
+  --accent: #166534;
+  --accent-strong: #0f4b27;
+  --accent-soft: #d7f1dd;
+  --warning: #a16207;
+  --warning-soft: #fef3c7;
+  --danger: #b91c1c;
+  --danger-soft: #fee2e2;
+  --muted: #5f665a;
+  --shadow: 0 20px 50px rgba(47, 51, 41, 0.08);
+}
+
+@theme inline {
+  --color-background: var(--app-bg);
+  --color-foreground: var(--ink);
+  --font-sans: var(--font-manrope);
+  --font-mono: var(--font-plex-mono);
+}
+
+* {
+  border-color: var(--line);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background:
+    radial-gradient(circle at top right, rgba(22, 101, 52, 0.14), transparent 28%),
+    linear-gradient(180deg, #faf8f1 0%, var(--app-bg) 100%);
+  color: var(--ink);
+  font-family: var(--font-manrope), sans-serif;
+}
+
+a {
+  color: inherit;
+}
+
+::selection {
+  background: rgba(22, 101, 52, 0.18);
+}
+
+.grain {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.55)),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'%3E%3Cg fill='%231e221c' fill-opacity='.04'%3E%3Ccircle cx='20' cy='20' r='1'/%3E%3Ccircle cx='80' cy='50' r='1'/%3E%3Ccircle cx='120' cy='100' r='1'/%3E%3Ccircle cx='50' cy='130' r='1'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+.card-shadow {
+  box-shadow: var(--shadow);
+}
