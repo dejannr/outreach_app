@@ -17,7 +17,7 @@ export default async function SettingsPage() {
     <div className="space-y-6">
       <PageHeader
         title="Settings"
-        description="Manage the active script version, daily new lead limit, sender defaults, timezone, and working days."
+        description="Set the active script and the basic defaults used during daily outreach."
       />
       <Card>
         <SettingsForm settings={settings} versions={versions} />

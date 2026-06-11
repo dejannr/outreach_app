@@ -62,11 +62,18 @@ export function LeadForm() {
         <Input placeholder="Email" {...form.register("email")} />
         <Input placeholder="Phone" {...form.register("phone")} />
         <Input placeholder="Role" {...form.register("role")} />
-        <Input placeholder="Website" {...form.register("website")} />
-        <Input placeholder="Source" {...form.register("source")} />
-        <Input placeholder="Tags (comma separated)" {...form.register("tags")} />
       </div>
       <Textarea placeholder="Notes" {...form.register("notes")} />
+      <details className="rounded-lg border bg-[var(--surface-subtle)] p-4">
+        <summary className="cursor-pointer text-sm font-medium text-[var(--ink)]">
+          Optional fields
+        </summary>
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
+          <Input placeholder="Website" {...form.register("website")} />
+          <Input placeholder="Source" {...form.register("source")} />
+          <Input placeholder="Tags (comma separated)" {...form.register("tags")} />
+        </div>
+      </details>
       {form.formState.errors.companyName ? (
         <p className="text-sm text-[var(--danger)]">
           {form.formState.errors.companyName.message}

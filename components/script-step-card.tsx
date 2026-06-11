@@ -71,20 +71,28 @@ export function ScriptStepCard({ step, scriptId }: StepCardProps) {
       ) : null}
       <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
         <div className="space-y-3">
-          <div>
-            <p className="text-sm font-medium text-[var(--ink)]">Script text</p>
-            <pre className="mt-2 whitespace-pre-wrap rounded-md border bg-[var(--surface-subtle)] p-4 text-sm leading-[1.6] text-[var(--ink)]">
+          <div className="rounded-lg border bg-[var(--surface-subtle)] p-4">
+            <p className="text-sm font-medium text-[var(--ink)]">Script preview</p>
+            <p className="mt-2 line-clamp-4 whitespace-pre-wrap text-sm leading-6 text-[var(--muted-strong)]">
               {step.scriptText}
-            </pre>
+            </p>
+            <details className="mt-3">
+              <summary className="cursor-pointer text-sm font-medium text-[var(--accent)]">
+                Show full script
+              </summary>
+              <pre className="mt-3 whitespace-pre-wrap rounded-md border bg-white p-4 text-sm leading-[1.6] text-[var(--ink)]">
+                {step.scriptText}
+              </pre>
+              {step.instructions ? (
+                <div className="mt-3">
+                  <p className="text-sm font-medium text-[var(--ink)]">Instructions</p>
+                  <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-[var(--muted)]">
+                    {step.instructions}
+                  </p>
+                </div>
+              ) : null}
+            </details>
           </div>
-          {step.instructions ? (
-            <div>
-              <p className="text-sm font-medium text-[var(--ink)]">Instructions</p>
-              <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-[var(--muted)]">
-                {step.instructions}
-              </p>
-            </div>
-          ) : null}
         </div>
         <div className="space-y-3">
           <div className="rounded-lg border bg-[var(--surface-subtle)] p-4 text-sm">

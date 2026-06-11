@@ -78,32 +78,37 @@ export function SettingsForm({
         <Input placeholder="Company name" {...form.register("companyName")} />
         <Input placeholder="Timezone" {...form.register("defaultTimezone")} />
       </div>
-      <div className="space-y-2">
-        <p className="text-sm font-semibold">Working days</p>
-        <div className="flex flex-wrap gap-2">
-          {dayOptions.map((day) => {
-            const checked = workingDays.includes(day);
-            return (
-              <label
-                key={day}
-                className="flex items-center gap-2 rounded-full border bg-white px-3 py-2 text-sm"
-              >
-                <input
-                  type="checkbox"
-                  checked={checked}
-                  onChange={(event) => {
-                    const next = event.target.checked
-                      ? [...workingDays, day]
-                      : workingDays.filter((item) => item !== day);
-                    form.setValue("workingDays", next);
-                  }}
-                />
-                {day}
-              </label>
-            );
-          })}
+      <details className="rounded-lg border bg-[var(--surface-subtle)] p-4">
+        <summary className="cursor-pointer text-sm font-medium text-[var(--ink)]">
+          Advanced settings
+        </summary>
+        <div className="mt-4 space-y-2">
+          <p className="text-sm font-medium text-[var(--ink)]">Working days</p>
+          <div className="flex flex-wrap gap-2">
+            {dayOptions.map((day) => {
+              const checked = workingDays.includes(day);
+              return (
+                <label
+                  key={day}
+                  className="flex items-center gap-2 rounded-md border bg-white px-3 py-2 text-sm"
+                >
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={(event) => {
+                      const next = event.target.checked
+                        ? [...workingDays, day]
+                        : workingDays.filter((item) => item !== day);
+                      form.setValue("workingDays", next);
+                    }}
+                  />
+                  {day}
+                </label>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      </details>
       <Button type="submit">Save settings</Button>
     </form>
   );

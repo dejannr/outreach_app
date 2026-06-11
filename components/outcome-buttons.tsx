@@ -36,6 +36,22 @@ type VersionOption = {
   name: string;
 };
 
+function isCommonOutcome(label: string) {
+  const normalized = label.toLowerCase();
+  return [
+    "no answer",
+    "voicemail",
+    "interested",
+    "busy",
+    "not interested",
+    "sent",
+    "positive reply",
+    "bad contact",
+    "documents received",
+    "demo booked",
+  ].some((value) => normalized.includes(value));
+}
+
 type OutcomeFormValues = {
   note: string;
   scheduledAt: string;
@@ -69,6 +85,7 @@ export function OutcomeButtons({
   const customFormId = `custom-outcome-form-${taskId}`;
   const [selectedOutcome, setSelectedOutcome] = useState<Outcome | null>(null);
   const [showCustom, setShowCustom] = useState(false);
+  const [showMoreOutcomes, setShowMoreOutcomes] = useState(false);
 
   const outcomeForm = useForm<OutcomeFormValues>({
     defaultValues: {
@@ -142,10 +159,17 @@ export function OutcomeButtons({
       selectedOutcome?.requiresContact,
   );
 
+  const visibleOutcomes = outcomes
+    .filter((outcome) => isCommonOutcome(outcome.label))
+    .slice(0, 5);
+  const hiddenOutcomes = outcomes.filter(
+    (outcome) => !visibleOutcomes.some((visible) => visible.id === outcome.id),
+  );
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap gap-2">
-        {outcomes.map((outcome) => (
+        {visibleOutcomes.map((outcome) => (
           <Button
             key={outcome.id}
             type="button"
@@ -159,18 +183,62 @@ export function OutcomeButtons({
             {outcome.label}
           </Button>
         ))}
-        <Button
-          type="button"
-          size="sm"
-          variant="ghost"
-          onClick={() => {
-            resetOutcomeState();
-            setShowCustom(true);
-          }}
-        >
-          Other / Custom Outcome
-        </Button>
+        {hiddenOutcomes.length ? (
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            onClick={() => setShowMoreOutcomes((current) => !current)}
+          >
+            {showMoreOutcomes ? "Hide outcomes" : "More outcomes"}
+          </Button>
+        ) : null}
+        {!hiddenOutcomes.length ? (
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              resetOutcomeState();
+              setShowCustom(true);
+            }}
+          >
+            Other / Custom
+          </Button>
+        ) : null}
       </div>
+
+      {showMoreOutcomes ? (
+        <div className="space-y-3 rounded-lg border bg-[var(--surface-subtle)] p-4">
+          <div className="flex flex-wrap gap-2">
+            {hiddenOutcomes.map((outcome) => (
+              <Button
+                key={outcome.id}
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  resetCustomState();
+                  setSelectedOutcome(outcome);
+                }}
+              >
+                {outcome.label}
+              </Button>
+            ))}
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                resetOutcomeState();
+                setShowCustom(true);
+              }}
+            >
+              Other / Custom
+            </Button>
+          </div>
+        </div>
+      ) : null}
 
       <ConfirmDialog
         open={Boolean(selectedOutcome)}

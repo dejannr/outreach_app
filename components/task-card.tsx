@@ -79,16 +79,20 @@ export function TaskCard({
           </div>
           <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-[var(--muted)]">
             <span>{task.lead.contactName || "Unknown contact"}</span>
-            <span>{task.lead.email || "No email"}</span>
-            <span>{task.lead.phone || "No phone"}</span>
+            {step?.channel === "EMAIL" ? (
+              <span>{task.lead.email || "No email"}</span>
+            ) : null}
+            {step?.channel === "PHONE" ? (
+              <span>{task.lead.phone || "No phone"}</span>
+            ) : null}
           </div>
         </div>
         <div className="rounded-lg border bg-[var(--surface-subtle)] px-4 py-3 text-sm">
           <p className="font-medium text-[var(--ink)]">{task.title}</p>
           <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[13px] text-[var(--muted)]">
             <span>Due {formatDateTime(task.dueAt)}</span>
-            {step ? <span>{STEP_CHANNEL_LABELS[step.channel]}</span> : null}
             {step ? <span>{step.name}</span> : null}
+            {step ? <span>{STEP_CHANNEL_LABELS[step.channel]}</span> : null}
           </div>
         </div>
       </div>
@@ -122,7 +126,7 @@ export function TaskCard({
               <div>
                 <p className="text-sm font-medium text-[var(--ink)]">Script</p>
                 <p className="text-xs text-[var(--muted)]">
-                  Read, copy, and execute the exact outreach step.
+                  Read it, do it, then record what happened.
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">

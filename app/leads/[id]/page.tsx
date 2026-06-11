@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import Link from "next/link";
 
 import { ActivityTimeline } from "@/components/activity-timeline";
 import { LeadQuickActions } from "@/components/lead-quick-actions";
@@ -8,6 +9,7 @@ import { NoteForm } from "@/components/forms/note-form";
 import { LeadOverrideForm } from "@/components/forms/lead-override-form";
 import { PageHeader } from "@/components/page-header";
 import { TaskCard } from "@/components/task-card";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { prisma } from "@/lib/prisma";
 import { getAppSettings } from "@/lib/settings";
@@ -17,10 +19,14 @@ export const dynamic = "force-dynamic";
 
 export default async function LeadDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { id } = await params;
+  const query = (await searchParams) || {};
+  const showFullHistory = query.history === "full";
   const settings = await getAppSettings();
   const lead = await prisma.lead.findUnique({
     where: { id },
@@ -92,6 +98,7 @@ export default async function LeadDetailPage({
       kind: "note" as const,
     })),
   ].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  const timelinePreview = showFullHistory ? timelineItems : timelineItems.slice(0, 8);
 
   return (
     <div className="space-y-6">
@@ -116,7 +123,12 @@ export default async function LeadDetailPage({
               Current step: {lead.currentStep?.name || "Not started"} · Next task: {lead.nextTaskAt ? lead.nextTaskAt.toLocaleString() : "Not scheduled"}
             </p>
           </div>
-          <LeadQuickActions leadId={lead.id} />
+          <div className="space-y-2">
+            <LeadQuickActions leadId={lead.id} />
+            <p className="text-xs text-[var(--muted)]">
+              Common actions only. Advanced workflow controls are below.
+            </p>
+          </div>
         </div>
       </Card>
 
@@ -149,10 +161,26 @@ export default async function LeadDetailPage({
           <Card className="space-y-4">
             <h2 className="text-lg font-semibold text-[var(--ink)]">Quick Actions</h2>
             <ManualTaskForm leadId={lead.id} steps={lead.scriptVersion?.steps || []} />
-            <LeadOverrideForm leadId={lead.id} steps={lead.scriptVersion?.steps || []} currentStatus={lead.status} />
             <NoteForm leadId={lead.id} />
+            <details className="rounded-lg border bg-[var(--surface-subtle)] p-4">
+              <summary className="cursor-pointer text-sm font-medium text-[var(--ink)]">
+                Advanced actions
+              </summary>
+              <div className="mt-4">
+                <LeadOverrideForm leadId={lead.id} steps={lead.scriptVersion?.steps || []} currentStatus={lead.status} />
+              </div>
+            </details>
           </Card>
-          <ActivityTimeline items={timelineItems} />
+          <div className="space-y-3">
+            <ActivityTimeline items={timelinePreview} />
+            {timelineItems.length > 8 ? (
+              <Button asChild variant="ghost" size="sm">
+                <Link href={showFullHistory ? `/leads/${lead.id}` : `/leads/${lead.id}?history=full`}>
+                  {showFullHistory ? "Show less history" : "Show full history"}
+                </Link>
+              </Button>
+            ) : null}
+          </div>
         </div>
 
         <Card className="space-y-4">
@@ -191,12 +219,23 @@ export default async function LeadDetailPage({
               <dd className="text-[var(--muted)]">{lead.nextTaskAt?.toLocaleString() || "None"}</dd>
             </div>
           </dl>
-          <div>
-            <p className="font-medium text-[var(--ink)]">Custom fields</p>
-            <pre className="mt-2 whitespace-pre-wrap rounded-md border bg-[var(--surface-subtle)] p-4 text-xs text-[var(--muted-strong)]">
-              {JSON.stringify(lead.customFields || {}, null, 2)}
-            </pre>
-          </div>
+          <details className="rounded-lg border bg-[var(--surface-subtle)] p-4">
+            <summary className="cursor-pointer text-sm font-medium text-[var(--ink)]">
+              Advanced workflow details
+            </summary>
+            <div className="mt-4 space-y-4">
+              <div className="text-sm text-[var(--muted)]">
+                <p>Script version: {lead.scriptVersion?.name || "Not assigned"}</p>
+                <p>Current step: {lead.currentStep?.name || "None"}</p>
+              </div>
+              <div>
+                <p className="font-medium text-[var(--ink)]">Custom fields</p>
+                <pre className="mt-2 whitespace-pre-wrap rounded-md border bg-white p-4 text-xs text-[var(--muted-strong)]">
+                  {JSON.stringify(lead.customFields || {}, null, 2)}
+                </pre>
+              </div>
+            </div>
+          </details>
         </Card>
       </div>
     </div>

@@ -10,13 +10,10 @@ type LeadRow = {
   id: string;
   companyName: string;
   contactName?: string | null;
-  email?: string | null;
-  phone?: string | null;
   status: LeadStatus;
   currentStepName?: string | null;
   nextTaskAt?: Date | null;
   lastContactedAt?: Date | null;
-  createdAt: Date;
 };
 
 export function LeadTable({ leads }: { leads: LeadRow[] }) {
@@ -29,13 +26,10 @@ export function LeadTable({ leads }: { leads: LeadRow[] }) {
               {[
                 "Company",
                 "Contact",
-                "Email",
-                "Phone",
                 "Status",
-                "Current Step",
+                "Next Step",
                 "Next Task",
                 "Last Contacted",
-                "Created",
                 "Actions",
               ].map((heading) => (
                 <th
@@ -59,12 +53,6 @@ export function LeadTable({ leads }: { leads: LeadRow[] }) {
                 <td className="px-4 py-3 text-[var(--muted-strong)]">
                   {lead.contactName || "Unknown"}
                 </td>
-                <td className="px-4 py-3 text-[var(--muted-strong)]">
-                  {lead.email || "No email"}
-                </td>
-                <td className="px-4 py-3 text-[var(--muted-strong)]">
-                  {lead.phone || "No phone"}
-                </td>
                 <td className="px-4 py-3">
                   <LeadStatusBadge status={lead.status} />
                 </td>
@@ -76,9 +64,6 @@ export function LeadTable({ leads }: { leads: LeadRow[] }) {
                 </td>
                 <td className="px-4 py-3 text-[var(--muted)]">
                   {formatDateTime(lead.lastContactedAt)}
-                </td>
-                <td className="px-4 py-3 text-[var(--muted)]">
-                  {formatDateTime(lead.createdAt)}
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex gap-2">

@@ -81,20 +81,11 @@ export default async function StartWorkingPage() {
     task.step ? HIGH_VALUE_CHANNELS.includes(task.step.channel) : false,
   );
 
-  const activeLeadCount = await prisma.lead.count({
-    where: {
-      status: {
-        in: ["ACTIVE", "WAITING", "DEMO_BOOKED", "DOCUMENTS_REQUESTED", "DOCUMENTS_RECEIVED", "LOOM_SENT"],
-      },
-    },
-  });
-
   const summary = [
-    { label: "Open tasks due today", value: dueTodayTasks.length },
     { label: "Overdue tasks", value: overdueTasks.length },
+    { label: "Due today", value: dueTodayTasks.length },
+    { label: "High value", value: highValueTasks.length },
     { label: "New leads available", value: newLeads.length },
-    { label: "Demos / document follow-ups", value: highValueTasks.length },
-    { label: "Total active leads", value: activeLeadCount },
   ];
 
   const renderTask = (task: (typeof tasks)[number]) => {
@@ -141,7 +132,7 @@ export default async function StartWorkingPage() {
         }
       />
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {summary.map((item) => (
           <Card key={item.label} className="p-4">
             <p className="text-sm text-[var(--muted)]">{item.label}</p>
@@ -192,8 +183,12 @@ export default async function StartWorkingPage() {
                     "use server";
                     await startLeadAction({ leadId: lead.id });
                   }}
+                  className="flex flex-wrap gap-2"
                 >
                   <Button type="submit">Start Outreach</Button>
+                  <Button asChild type="button" variant="secondary">
+                    <Link href={`/leads/${lead.id}`}>View Lead</Link>
+                  </Button>
                 </form>
               </Card>
             ))}
