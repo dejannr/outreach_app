@@ -9,6 +9,7 @@ import {
   completeCustomOutcomeAction,
   completeTaskAction,
 } from "@/app/actions/tasks";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -64,6 +65,8 @@ export function OutcomeButtons({
   steps: StepOption[];
   scriptVersions: VersionOption[];
 }) {
+  const outcomeFormId = `outcome-form-${taskId}`;
+  const customFormId = `custom-outcome-form-${taskId}`;
   const [selectedOutcome, setSelectedOutcome] = useState<Outcome | null>(null);
   const [showCustom, setShowCustom] = useState(false);
 
@@ -89,15 +92,28 @@ export function OutcomeButtons({
     },
   });
 
-  const completeSelectedOutcome = (values: OutcomeFormValues) => {
-    if (!selectedOutcome) {
+  const resetOutcomeState = () => {
+    setSelectedOutcome(null);
+    outcomeForm.reset();
+  };
+
+  const resetCustomState = () => {
+    setShowCustom(false);
+    customForm.reset();
+  };
+
+  const completeSelectedOutcome = (
+    outcome: Outcome,
+    values: OutcomeFormValues,
+  ) => {
+    if (!outcome) {
       return;
     }
 
     startTransition(async () => {
       const result = await completeTaskAction({
         taskId,
-        outcomeId: selectedOutcome.id,
+        outcomeId: outcome.id,
         note: values.note,
         scheduledAt: values.scheduledAt,
         contactName: values.contactName,
@@ -112,12 +128,11 @@ export function OutcomeButtons({
       }
 
       toast.success(
-        selectedOutcome.isTerminal
-          ? `Lead marked as ${selectedOutcome.setLeadStatus ?? "updated"}. No next task scheduled.`
-          : `Next step scheduled${selectedOutcome.nextStepName ? `: ${selectedOutcome.nextStepName}` : ""}.`,
+        outcome.isTerminal
+          ? `Lead marked as ${outcome.setLeadStatus ?? "updated"}. No next task scheduled.`
+          : `Next step scheduled${outcome.nextStepName ? `: ${outcome.nextStepName}` : ""}.`,
       );
-      setSelectedOutcome(null);
-      outcomeForm.reset();
+      resetOutcomeState();
     });
   };
 
@@ -137,21 +152,7 @@ export function OutcomeButtons({
             variant="secondary"
             size="sm"
             onClick={() => {
-              setShowCustom(false);
-              if (
-                !outcome.requiresNote &&
-                !outcome.requiresDateTime &&
-                !outcome.requiresContact
-              ) {
-                if (!window.confirm(`Complete task with outcome "${outcome.label}"?`)) {
-                  return;
-                }
-
-                setSelectedOutcome(outcome);
-                completeSelectedOutcome(outcomeForm.getValues());
-                return;
-              }
-
+              resetCustomState();
               setSelectedOutcome(outcome);
             }}
           >
@@ -163,63 +164,90 @@ export function OutcomeButtons({
           size="sm"
           variant="ghost"
           onClick={() => {
-            setSelectedOutcome(null);
-            setShowCustom((current) => !current);
+            resetOutcomeState();
+            setShowCustom(true);
           }}
         >
           Other / Custom Outcome
         </Button>
       </div>
 
-      {selectedOutcome && needsExtraFields ? (
-        <form
-          className="space-y-3 rounded-lg border bg-[var(--surface-subtle)] p-4"
-          onSubmit={outcomeForm.handleSubmit(completeSelectedOutcome)}
-        >
-          <div className="space-y-1">
-            <p className="text-sm font-semibold text-[var(--ink)]">
-              {selectedOutcome.label}
-            </p>
-            <p className="text-xs text-[var(--muted)]">
-              Provide the required details to complete the task.
-            </p>
-          </div>
-          {selectedOutcome.requiresNote ? (
-            <Textarea
-              placeholder="Optional completion note"
-              {...outcomeForm.register("note")}
-            />
-          ) : null}
-          {selectedOutcome.requiresDateTime ? (
-            <Input type="datetime-local" {...outcomeForm.register("scheduledAt")} />
-          ) : null}
-          {selectedOutcome.requiresContact ? (
-            <div className="grid gap-3 md:grid-cols-2">
-              <Input placeholder="Contact name" {...outcomeForm.register("contactName")} />
-              <Input placeholder="Contact email" {...outcomeForm.register("contactEmail")} />
-              <Input placeholder="Contact phone" {...outcomeForm.register("contactPhone")} />
-              <Input placeholder="Contact role" {...outcomeForm.register("contactRole")} />
-            </div>
-          ) : null}
-          <div className="flex gap-2">
-            <Button type="submit" size="sm">
-              Complete task
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant="ghost"
-              onClick={() => setSelectedOutcome(null)}
-            >
-              Cancel
-            </Button>
-          </div>
-        </form>
-      ) : null}
+      <ConfirmDialog
+        open={Boolean(selectedOutcome)}
+        title={selectedOutcome ? `Complete with "${selectedOutcome.label}"` : ""}
+        description={
+          selectedOutcome
+            ? needsExtraFields
+              ? "Provide the required details and confirm the outcome."
+              : "Confirm this outcome to complete the task and schedule the next step."
+            : undefined
+        }
+        confirmLabel="Complete task"
+        onClose={resetOutcomeState}
+        onConfirm={
+          selectedOutcome && !needsExtraFields
+            ? () => completeSelectedOutcome(selectedOutcome, outcomeForm.getValues())
+            : undefined
+        }
+        confirmForm={needsExtraFields ? outcomeFormId : undefined}
+        confirmType={needsExtraFields ? "submit" : "button"}
+      >
+        {selectedOutcome ? (
+          <form
+            id={outcomeFormId}
+            className="space-y-3"
+            onSubmit={outcomeForm.handleSubmit((values) =>
+              completeSelectedOutcome(selectedOutcome, values),
+            )}
+          >
+            {selectedOutcome.requiresNote ? (
+              <Textarea
+                placeholder="Optional completion note"
+                {...outcomeForm.register("note")}
+              />
+            ) : null}
+            {selectedOutcome.requiresDateTime ? (
+              <Input
+                type="datetime-local"
+                {...outcomeForm.register("scheduledAt")}
+              />
+            ) : null}
+            {selectedOutcome.requiresContact ? (
+              <div className="grid gap-3 md:grid-cols-2">
+                <Input
+                  placeholder="Contact name"
+                  {...outcomeForm.register("contactName")}
+                />
+                <Input
+                  placeholder="Contact email"
+                  {...outcomeForm.register("contactEmail")}
+                />
+                <Input
+                  placeholder="Contact phone"
+                  {...outcomeForm.register("contactPhone")}
+                />
+                <Input
+                  placeholder="Contact role"
+                  {...outcomeForm.register("contactRole")}
+                />
+              </div>
+            ) : null}
+          </form>
+        ) : null}
+      </ConfirmDialog>
 
-      {showCustom ? (
+      <ConfirmDialog
+        open={showCustom}
+        title="Custom outcome"
+        description="Record what happened and define the next manual action."
+        confirmLabel="Save custom outcome"
+        confirmForm={customFormId}
+        confirmType="submit"
+        onClose={resetCustomState}
+      >
         <form
-          className="space-y-3 rounded-lg border bg-[var(--surface-subtle)] p-4"
+          id={customFormId}
+          className="space-y-3"
           onSubmit={customForm.handleSubmit((values) => {
             startTransition(async () => {
               const result = await completeCustomOutcomeAction({
@@ -240,19 +268,10 @@ export function OutcomeButtons({
               }
 
               toast.success(result.message || "Custom outcome recorded");
-              customForm.reset();
-              setShowCustom(false);
+              resetCustomState();
             });
           })}
         >
-          <div className="space-y-1">
-            <p className="text-sm font-semibold text-[var(--ink)]">
-              Custom outcome
-            </p>
-            <p className="text-xs text-[var(--muted)]">
-              Record what happened and define the next manual action.
-            </p>
-          </div>
           <Textarea
             placeholder="What happened?"
             {...customForm.register("explanation", { required: true })}
@@ -292,21 +311,8 @@ export function OutcomeButtons({
             For a reusable new branch, create a cloned script version from the
             Scripts page and optionally migrate this lead to it here.
           </p>
-          <div className="flex gap-2">
-            <Button type="submit" size="sm">
-              Save custom outcome
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant="ghost"
-              onClick={() => setShowCustom(false)}
-            >
-              Cancel
-            </Button>
-          </div>
         </form>
-      ) : null}
+      </ConfirmDialog>
     </div>
   );
 }
