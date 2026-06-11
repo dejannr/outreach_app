@@ -133,46 +133,56 @@ export default async function StartWorkingPage() {
     <div className="space-y-6">
       <PageHeader
         title="Start Working"
-        description="Daily command center for Dejan. Open the page, do the next task, select the correct outcome, and let the system schedule the follow-up."
+        description="Today's outreach tasks, overdue follow-ups, and new leads ready to enter the workflow."
         actions={
-          <Button asChild variant="secondary">
-            <Link href="/leads/new">Add lead</Link>
+          <Button asChild>
+            <Link href="/leads/new">Create lead</Link>
           </Button>
         }
       />
 
-      <div className="grid gap-4 xl:grid-cols-5">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
         {summary.map((item) => (
-          <Card key={item.label} className="grain">
+          <Card key={item.label} className="p-4">
             <p className="text-sm text-[var(--muted)]">{item.label}</p>
-            <p className="mt-3 text-4xl font-extrabold">{item.value}</p>
+            <p className="mt-2 text-3xl font-semibold text-[var(--ink)]">
+              {item.value}
+            </p>
           </Card>
         ))}
       </div>
 
       <section className="space-y-4">
-        <h2 className="text-2xl font-bold">Overdue Tasks</h2>
+        <div className="flex items-center gap-2">
+          <span className="h-2 w-2 rounded-full bg-red-400" />
+          <h2 className="text-lg font-semibold text-[var(--ink)]">Overdue Tasks</h2>
+        </div>
         {overdueTasks.length ? overdueTasks.map(renderTask) : <EmptyState title="No overdue tasks" description="Nothing is past due. Move to today’s queue or start new leads." />}
       </section>
 
       <section className="space-y-4">
-        <h2 className="text-2xl font-bold">Due Today</h2>
+        <h2 className="text-lg font-semibold text-[var(--ink)]">Due Today</h2>
         {dueTodayTasks.length ? dueTodayTasks.map(renderTask) : <EmptyState title="No tasks due today" description="No tasks due today. You can start new leads or review active leads." />}
       </section>
 
       <section className="space-y-4">
-        <h2 className="text-2xl font-bold">High-Value Follow-Ups</h2>
+        <div className="flex items-center gap-2">
+          <span className="h-2 w-2 rounded-full bg-blue-500" />
+          <h2 className="text-lg font-semibold text-[var(--ink)]">High-Value Follow-Ups</h2>
+        </div>
         {highValueTasks.length ? highValueTasks.map(renderTask) : <EmptyState title="No high-value follow-ups" description="No demos, document requests, Loom follow-ups, or close steps are open right now." />}
       </section>
 
       <section className="space-y-4">
-        <h2 className="text-2xl font-bold">New Leads</h2>
+        <h2 className="text-lg font-semibold text-[var(--ink)]">New Leads</h2>
         {newLeads.length ? (
           <div className="grid gap-4 xl:grid-cols-2">
             {newLeads.map((lead) => (
               <Card key={lead.id} className="space-y-4">
                 <div>
-                  <h3 className="text-xl font-bold">{lead.companyName}</h3>
+                  <h3 className="text-base font-semibold text-[var(--ink)]">
+                    {lead.companyName}
+                  </h3>
                   <p className="mt-1 text-sm text-[var(--muted)]">
                     {lead.contactName || "Unknown contact"} · {lead.email || "No email"} · {lead.phone || "No phone"}
                   </p>

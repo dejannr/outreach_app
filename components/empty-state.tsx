@@ -10,10 +10,10 @@ export function EmptyState({
   action?: React.ReactNode;
 }) {
   return (
-    <Card className="grain border-dashed text-center">
-      <div className="space-y-3 py-6">
-        <h3 className="text-xl font-semibold">{title}</h3>
-        <p className="mx-auto max-w-xl text-sm text-[var(--muted)]">
+    <Card className="border-dashed text-center">
+      <div className="space-y-2 py-6">
+        <h3 className="text-base font-semibold text-[var(--ink)]">{title}</h3>
+        <p className="mx-auto max-w-xl text-sm leading-6 text-[var(--muted)]">
           {description}
         </p>
         {action ? <div className="pt-2">{action}</div> : null}

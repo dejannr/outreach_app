@@ -70,19 +70,19 @@ export default async function ScriptDetailPage({
       />
 
       <Card className="space-y-4">
-        <h2 className="text-xl font-bold">Versions</h2>
+        <h2 className="text-lg font-semibold text-[var(--ink)]">Versions</h2>
         <div className="grid gap-4 lg:grid-cols-3">
           {script.versions.map((version) => (
-            <div key={version.id} className="rounded-2xl border bg-white p-4">
+            <div key={version.id} className="rounded-lg border bg-[var(--surface-subtle)] p-4">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="font-semibold">{version.name}</p>
+                  <p className="font-medium text-[var(--ink)]">{version.name}</p>
                   <p className="text-sm text-[var(--muted)]">
                     {version.steps.length} step(s)
                   </p>
                 </div>
                 {version.isActive ? (
-                  <span className="rounded-full bg-[var(--accent-soft)] px-3 py-1 text-xs font-semibold text-[var(--accent-strong)]">
+                  <span className="rounded-md border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
                     Active
                   </span>
                 ) : null}
@@ -97,7 +97,7 @@ export default async function ScriptDetailPage({
 
       {activeVersion ? (
         <section className="space-y-4">
-          <h2 className="text-2xl font-bold">
+          <h2 className="text-lg font-semibold text-[var(--ink)]">
             Steps for {activeVersion.name}
           </h2>
           {activeVersion.steps.map((step) => (

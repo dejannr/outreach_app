@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Mono, Manrope } from "next/font/google";
+import { Geist, IBM_Plex_Mono } from "next/font/google";
 import { Toaster } from "sonner";
 
 import { AppShell } from "@/components/app-shell";
 
 import "./globals.css";
 
-const manrope = Manrope({
-  variable: "--font-manrope",
+const geist = Geist({
+  variable: "--font-geist",
   subsets: ["latin"],
 });
 
@@ -30,7 +30,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${manrope.variable} ${plexMono.variable} h-full antialiased`}
+      className={`${geist.variable} ${plexMono.variable} h-full antialiased`}
     >
       <body className="min-h-full bg-[var(--app-bg)] text-[var(--ink)]">
         <AppShell>{children}</AppShell>

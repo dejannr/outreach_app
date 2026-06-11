@@ -24,7 +24,7 @@ export function LeadTable({ leads }: { leads: LeadRow[] }) {
     <Card className="overflow-hidden p-0">
       <div className="overflow-x-auto">
         <table className="min-w-full text-left text-sm">
-          <thead className="bg-[var(--card-strong)] text-[var(--muted)]">
+          <thead className="bg-[var(--surface-subtle)] text-[var(--muted-strong)]">
             <tr>
               {[
                 "Company",
@@ -38,7 +38,10 @@ export function LeadTable({ leads }: { leads: LeadRow[] }) {
                 "Created",
                 "Actions",
               ].map((heading) => (
-                <th key={heading} className="px-4 py-3 font-semibold">
+                <th
+                  key={heading}
+                  className="px-4 py-3 text-[12px] font-semibold uppercase tracking-[0.02em]"
+                >
                   {heading}
                 </th>
               ))}
@@ -46,19 +49,38 @@ export function LeadTable({ leads }: { leads: LeadRow[] }) {
           </thead>
           <tbody>
             {leads.map((lead) => (
-              <tr key={lead.id} className="border-t align-top">
-                <td className="px-4 py-4 font-semibold">{lead.companyName}</td>
-                <td className="px-4 py-4">{lead.contactName || "Unknown"}</td>
-                <td className="px-4 py-4">{lead.email || "No email"}</td>
-                <td className="px-4 py-4">{lead.phone || "No phone"}</td>
-                <td className="px-4 py-4">
+              <tr
+                key={lead.id}
+                className="h-12 border-t align-middle transition-colors hover:bg-[var(--surface-subtle)]"
+              >
+                <td className="px-4 py-3 font-medium text-[var(--ink)]">
+                  {lead.companyName}
+                </td>
+                <td className="px-4 py-3 text-[var(--muted-strong)]">
+                  {lead.contactName || "Unknown"}
+                </td>
+                <td className="px-4 py-3 text-[var(--muted-strong)]">
+                  {lead.email || "No email"}
+                </td>
+                <td className="px-4 py-3 text-[var(--muted-strong)]">
+                  {lead.phone || "No phone"}
+                </td>
+                <td className="px-4 py-3">
                   <LeadStatusBadge status={lead.status} />
                 </td>
-                <td className="px-4 py-4">{lead.currentStepName || "Not started"}</td>
-                <td className="px-4 py-4">{formatDateTime(lead.nextTaskAt)}</td>
-                <td className="px-4 py-4">{formatDateTime(lead.lastContactedAt)}</td>
-                <td className="px-4 py-4">{formatDateTime(lead.createdAt)}</td>
-                <td className="px-4 py-4">
+                <td className="px-4 py-3 text-[var(--muted-strong)]">
+                  {lead.currentStepName || "Not started"}
+                </td>
+                <td className="px-4 py-3 text-[var(--muted)]">
+                  {formatDateTime(lead.nextTaskAt)}
+                </td>
+                <td className="px-4 py-3 text-[var(--muted)]">
+                  {formatDateTime(lead.lastContactedAt)}
+                </td>
+                <td className="px-4 py-3 text-[var(--muted)]">
+                  {formatDateTime(lead.createdAt)}
+                </td>
+                <td className="px-4 py-3">
                   <div className="flex gap-2">
                     <Button asChild size="sm" variant="secondary">
                       <Link href={`/leads/${lead.id}`}>View lead</Link>

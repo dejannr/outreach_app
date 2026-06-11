@@ -20,11 +20,13 @@ export function ScriptOutcomeList({ outcomes }: { outcomes: OutcomeItem[] }) {
   return (
     <div className="space-y-3">
       {outcomes.map((outcome) => (
-        <Card key={outcome.id} className="space-y-2 rounded-2xl p-4">
+        <Card key={outcome.id} className="space-y-2 rounded-lg p-4">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="font-semibold">{outcome.label}</p>
-              <p className="font-mono text-xs text-[var(--muted)]">
+              <p className="text-sm font-medium text-[var(--ink)]">
+                {outcome.label}
+              </p>
+              <p className="font-mono text-[11px] text-[var(--muted)]">
                 {outcome.key} · {outcome.metricKey}
               </p>
             </div>

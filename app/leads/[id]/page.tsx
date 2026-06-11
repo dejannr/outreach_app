@@ -104,13 +104,15 @@ export default async function LeadDetailPage({
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-3">
-              <h2 className="text-3xl font-extrabold">{lead.companyName}</h2>
+              <h2 className="text-2xl font-semibold text-[var(--ink)]">
+                {lead.companyName}
+              </h2>
               <LeadStatusBadge status={lead.status} />
             </div>
-            <p className="text-sm text-[var(--muted)]">
+            <p className="text-sm leading-6 text-[var(--muted)]">
               {lead.contactName || "Unknown contact"} · {lead.phone || "No phone"} · {lead.email || "No email"} · {lead.website || "No website"}
             </p>
-            <p className="text-sm text-[var(--muted)]">
+            <p className="text-sm leading-6 text-[var(--muted)]">
               Current step: {lead.currentStep?.name || "Not started"} · Next task: {lead.nextTaskAt ? lead.nextTaskAt.toLocaleString() : "Not scheduled"}
             </p>
           </div>
@@ -120,7 +122,7 @@ export default async function LeadDetailPage({
 
       {openTask ? (
         <section className="space-y-4">
-          <h2 className="text-2xl font-bold">Current Task</h2>
+          <h2 className="text-lg font-semibold text-[var(--ink)]">Current Task</h2>
           <TaskCard
             task={openTask}
             renderedScript={renderScriptText(openTask.step?.scriptText || "", lead, {
@@ -142,10 +144,10 @@ export default async function LeadDetailPage({
         </section>
       ) : null}
 
-      <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+      <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
         <div className="space-y-6">
           <Card className="space-y-4">
-            <h2 className="text-xl font-bold">Quick Actions</h2>
+            <h2 className="text-lg font-semibold text-[var(--ink)]">Quick Actions</h2>
             <ManualTaskForm leadId={lead.id} steps={lead.scriptVersion?.steps || []} />
             <LeadOverrideForm leadId={lead.id} steps={lead.scriptVersion?.steps || []} currentStatus={lead.status} />
             <NoteForm leadId={lead.id} />
@@ -154,44 +156,44 @@ export default async function LeadDetailPage({
         </div>
 
         <Card className="space-y-4">
-          <h2 className="text-xl font-bold">Lead Details</h2>
+          <h2 className="text-lg font-semibold text-[var(--ink)]">Lead Details</h2>
           <dl className="grid gap-4 text-sm sm:grid-cols-2">
             <div>
-              <dt className="font-semibold">Company</dt>
+              <dt className="font-medium text-[var(--ink)]">Company</dt>
               <dd className="text-[var(--muted)]">{lead.companyName}</dd>
             </div>
             <div>
-              <dt className="font-semibold">Contact</dt>
+              <dt className="font-medium text-[var(--ink)]">Contact</dt>
               <dd className="text-[var(--muted)]">{lead.contactName || "Unknown"}</dd>
             </div>
             <div>
-              <dt className="font-semibold">Email</dt>
+              <dt className="font-medium text-[var(--ink)]">Email</dt>
               <dd className="text-[var(--muted)]">{lead.email || "None"}</dd>
             </div>
             <div>
-              <dt className="font-semibold">Phone</dt>
+              <dt className="font-medium text-[var(--ink)]">Phone</dt>
               <dd className="text-[var(--muted)]">{lead.phone || "None"}</dd>
             </div>
             <div>
-              <dt className="font-semibold">Role</dt>
+              <dt className="font-medium text-[var(--ink)]">Role</dt>
               <dd className="text-[var(--muted)]">{lead.role || "None"}</dd>
             </div>
             <div>
-              <dt className="font-semibold">Source</dt>
+              <dt className="font-medium text-[var(--ink)]">Source</dt>
               <dd className="text-[var(--muted)]">{lead.source || "None"}</dd>
             </div>
             <div>
-              <dt className="font-semibold">Current step</dt>
+              <dt className="font-medium text-[var(--ink)]">Current step</dt>
               <dd className="text-[var(--muted)]">{lead.currentStep?.name || "None"}</dd>
             </div>
             <div>
-              <dt className="font-semibold">Next task date</dt>
+              <dt className="font-medium text-[var(--ink)]">Next task date</dt>
               <dd className="text-[var(--muted)]">{lead.nextTaskAt?.toLocaleString() || "None"}</dd>
             </div>
           </dl>
           <div>
-            <p className="font-semibold">Custom fields</p>
-            <pre className="mt-2 whitespace-pre-wrap rounded-2xl border bg-white p-4 text-xs">
+            <p className="font-medium text-[var(--ink)]">Custom fields</p>
+            <pre className="mt-2 whitespace-pre-wrap rounded-md border bg-[var(--surface-subtle)] p-4 text-xs text-[var(--muted-strong)]">
               {JSON.stringify(lead.customFields || {}, null, 2)}
             </pre>
           </div>

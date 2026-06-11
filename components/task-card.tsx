@@ -68,36 +68,41 @@ export function TaskCard({
   return (
     <Card className="space-y-5">
       <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-        <div className="space-y-3">
+        <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-3">
-            <h3 className="text-2xl font-bold">{task.lead.companyName}</h3>
+            <h3 className="text-xl font-semibold text-[var(--ink)]">
+              {task.lead.companyName}
+            </h3>
             <LeadStatusBadge status={task.lead.status} />
           </div>
-          <div className="flex flex-wrap gap-4 text-sm text-[var(--muted)]">
+          <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-[var(--muted)]">
             <span>{task.lead.contactName || "Unknown contact"}</span>
             <span>{task.lead.email || "No email"}</span>
             <span>{task.lead.phone || "No phone"}</span>
           </div>
         </div>
-        <div className="rounded-2xl border bg-white px-4 py-3 text-right text-sm">
-          <p className="font-semibold">{task.title}</p>
-          <p className="text-[var(--muted)]">Due {formatDateTime(task.dueAt)}</p>
-          {step ? (
-            <p className="text-[var(--muted)]">
-              {step.name} · {STEP_CHANNEL_LABELS[step.channel]}
-            </p>
-          ) : null}
+        <div className="rounded-lg border bg-[var(--surface-subtle)] px-4 py-3 text-sm">
+          <p className="font-medium text-[var(--ink)]">{task.title}</p>
+          <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[13px] text-[var(--muted)]">
+            <span>Due {formatDateTime(task.dueAt)}</span>
+            {step ? <span>{STEP_CHANNEL_LABELS[step.channel]}</span> : null}
+            {step ? <span>{step.name}</span> : null}
+          </div>
         </div>
       </div>
 
-      <div className="grid gap-5 xl:grid-cols-[1.3fr_0.7fr]">
+      <div className="grid gap-5 xl:grid-cols-[1.35fr_0.65fr]">
         <div className="space-y-4">
           {step?.subject ? (
-            <div className="rounded-2xl border bg-white p-4">
+            <div className="rounded-lg border bg-white p-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <p className="font-semibold">Subject line</p>
-                  <p className="text-sm text-[var(--muted)]">{renderedSubject}</p>
+                  <p className="text-sm font-medium text-[var(--ink)]">
+                    Subject line
+                  </p>
+                  <p className="text-sm text-[var(--muted-strong)]">
+                    {renderedSubject}
+                  </p>
                 </div>
                 <Button
                   type="button"
@@ -110,9 +115,14 @@ export function TaskCard({
               </div>
             </div>
           ) : null}
-          <div className="rounded-2xl border bg-white p-4">
+          <div className="rounded-lg border bg-[var(--surface-subtle)] p-4">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-              <p className="font-semibold">Script</p>
+              <div>
+                <p className="text-sm font-medium text-[var(--ink)]">Script</p>
+                <p className="text-xs text-[var(--muted)]">
+                  Read, copy, and execute the exact outreach step.
+                </p>
+              </div>
               <div className="flex flex-wrap gap-2">
                 <Button
                   type="button"
@@ -148,12 +158,14 @@ export function TaskCard({
                 ) : null}
               </div>
             </div>
-            <pre className="whitespace-pre-wrap text-sm leading-7">{renderedScript}</pre>
+            <pre className="whitespace-pre-wrap rounded-md border bg-white p-4 text-sm leading-[1.6] text-[var(--ink)]">
+              {renderedScript}
+            </pre>
           </div>
           {step?.instructions || task.description ? (
-            <div className="rounded-2xl border bg-[var(--card-strong)] p-4 text-sm text-[var(--muted)]">
-              <p className="font-semibold text-[var(--ink)]">Instructions</p>
-              <p className="mt-2 whitespace-pre-wrap">
+            <div className="rounded-lg border bg-white p-4 text-sm text-[var(--muted)]">
+              <p className="font-medium text-[var(--ink)]">Instructions</p>
+              <p className="mt-2 whitespace-pre-wrap leading-6">
                 {step?.instructions || task.description}
               </p>
             </div>
@@ -161,9 +173,11 @@ export function TaskCard({
         </div>
 
         <div className="space-y-4">
-          <div className="rounded-2xl border bg-white p-4">
-            <p className="font-semibold">Outcome selection</p>
-            <p className="mt-1 text-sm text-[var(--muted)]">
+          <div className="rounded-lg border bg-white p-4">
+            <p className="text-sm font-medium text-[var(--ink)]">
+              Outcome selection
+            </p>
+            <p className="mt-1 text-sm leading-6 text-[var(--muted)]">
               Pick the exact outcome. The system will schedule the next action automatically.
             </p>
           </div>

@@ -173,10 +173,17 @@ export function OutcomeButtons({
 
       {selectedOutcome && needsExtraFields ? (
         <form
-          className="space-y-3 rounded-2xl border bg-white p-4"
+          className="space-y-3 rounded-lg border bg-[var(--surface-subtle)] p-4"
           onSubmit={outcomeForm.handleSubmit(completeSelectedOutcome)}
         >
-          <p className="font-semibold">{selectedOutcome.label}</p>
+          <div className="space-y-1">
+            <p className="text-sm font-semibold text-[var(--ink)]">
+              {selectedOutcome.label}
+            </p>
+            <p className="text-xs text-[var(--muted)]">
+              Provide the required details to complete the task.
+            </p>
+          </div>
           {selectedOutcome.requiresNote ? (
             <Textarea
               placeholder="Optional completion note"
@@ -212,7 +219,7 @@ export function OutcomeButtons({
 
       {showCustom ? (
         <form
-          className="space-y-3 rounded-2xl border bg-white p-4"
+          className="space-y-3 rounded-lg border bg-[var(--surface-subtle)] p-4"
           onSubmit={customForm.handleSubmit((values) => {
             startTransition(async () => {
               const result = await completeCustomOutcomeAction({
@@ -238,7 +245,14 @@ export function OutcomeButtons({
             });
           })}
         >
-          <p className="font-semibold">Custom outcome</p>
+          <div className="space-y-1">
+            <p className="text-sm font-semibold text-[var(--ink)]">
+              Custom outcome
+            </p>
+            <p className="text-xs text-[var(--muted)]">
+              Record what happened and define the next manual action.
+            </p>
+          </div>
           <Textarea
             placeholder="What happened?"
             {...customForm.register("explanation", { required: true })}

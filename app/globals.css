@@ -1,26 +1,37 @@
 @import "tailwindcss";
 
 :root {
-  --app-bg: #f4f2ea;
-  --ink: #1e221c;
-  --card: #fffdf7;
-  --card-strong: #f0ead8;
-  --line: #d7ceb8;
-  --accent: #166534;
-  --accent-strong: #0f4b27;
-  --accent-soft: #d7f1dd;
-  --warning: #a16207;
-  --warning-soft: #fef3c7;
-  --danger: #b91c1c;
-  --danger-soft: #fee2e2;
-  --muted: #5f665a;
-  --shadow: 0 20px 50px rgba(47, 51, 41, 0.08);
+  --app-bg: #f8fafc;
+  --ink: #0f172a;
+  --surface: #ffffff;
+  --surface-muted: #f1f5f9;
+  --surface-subtle: #f8fafc;
+  --line: #e2e8f0;
+  --line-strong: #cbd5e1;
+  --accent: #2563eb;
+  --accent-strong: #1d4ed8;
+  --accent-soft: #eff6ff;
+  --accent-ink: #1d4ed8;
+  --warning: #d97706;
+  --warning-soft: #fffbeb;
+  --warning-line: #fed7aa;
+  --danger: #dc2626;
+  --danger-strong: #b91c1c;
+  --danger-soft: #fef2f2;
+  --danger-line: #fecaca;
+  --success: #16a34a;
+  --success-soft: #f0fdf4;
+  --success-line: #bbf7d0;
+  --muted: #64748b;
+  --muted-strong: #475569;
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 2px 6px rgba(15, 23, 42, 0.06);
 }
 
 @theme inline {
   --color-background: var(--app-bg);
   --color-foreground: var(--ink);
-  --font-sans: var(--font-manrope);
+  --font-sans: var(--font-geist);
   --font-mono: var(--font-plex-mono);
 }
 
@@ -33,27 +44,26 @@ html {
 }
 
 body {
-  background:
-    radial-gradient(circle at top right, rgba(22, 101, 52, 0.14), transparent 28%),
-    linear-gradient(180deg, #faf8f1 0%, var(--app-bg) 100%);
+  background: var(--app-bg);
   color: var(--ink);
-  font-family: var(--font-manrope), sans-serif;
+  font-family: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 a {
   color: inherit;
+  text-decoration: none;
 }
 
 ::selection {
-  background: rgba(22, 101, 52, 0.18);
-}
-
-.grain {
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.55)),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'%3E%3Cg fill='%231e221c' fill-opacity='.04'%3E%3Ccircle cx='20' cy='20' r='1'/%3E%3Ccircle cx='80' cy='50' r='1'/%3E%3Ccircle cx='120' cy='100' r='1'/%3E%3Ccircle cx='50' cy='130' r='1'/%3E%3C/g%3E%3C/svg%3E");
+  background: rgba(37, 99, 235, 0.18);
 }
 
 .card-shadow {
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow-sm);
+}
+
+.card-shadow-hover {
+  box-shadow: var(--shadow-md);
 }

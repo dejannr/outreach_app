@@ -12,19 +12,19 @@ const navItems = [
 
 export function Sidebar({ pathname }: { pathname: string }) {
   return (
-    <aside className="grain flex h-full flex-col rounded-[2rem] border bg-white/80 p-5 backdrop-blur-sm">
-      <div className="space-y-3 border-b pb-6">
-        <p className="font-mono text-xs uppercase tracking-[0.26em] text-[var(--muted)]">
+    <aside className="flex h-full flex-col rounded-xl border bg-white p-4">
+      <div className="space-y-2 border-b border-[var(--line)] pb-5">
+        <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--muted)]">
           TruckA Company
         </p>
         <div>
-          <h2 className="text-2xl font-extrabold">TruckA Outreach</h2>
+          <h2 className="text-lg font-semibold text-[var(--ink)]">TruckA Outreach</h2>
           <p className="mt-1 text-sm text-[var(--muted)]">
             Script-driven daily command center.
           </p>
         </div>
       </div>
-      <nav className="mt-6 flex flex-1 flex-col gap-2">
+      <nav className="mt-5 flex flex-1 flex-col gap-1.5">
         {navItems.map((item) => {
           const isActive = pathname.startsWith(item.href);
           const Icon = item.icon;
@@ -34,20 +34,20 @@ export function Sidebar({ pathname }: { pathname: string }) {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-semibold transition",
+                "flex h-10 items-center gap-3 rounded-md px-3 text-sm font-medium transition-colors duration-150",
                 isActive
-                  ? "border-[var(--accent)] bg-[var(--accent)] text-white"
-                  : "border-transparent hover:border-[var(--line)] hover:bg-[var(--card)]",
+                  ? "bg-[var(--accent-soft)] text-[var(--accent-ink)]"
+                  : "text-[var(--muted-strong)] hover:bg-[var(--surface-muted)] hover:text-[var(--ink)]",
               )}
             >
-              <Icon className="h-4 w-4" />
+              <Icon className="h-4 w-4 stroke-[1.9]" />
               {item.label}
             </Link>
           );
         })}
       </nav>
-      <div className="rounded-2xl border bg-[var(--card-strong)] p-4 text-sm text-[var(--muted)]">
-        <p className="font-semibold text-[var(--ink)]">Daily rule</p>
+      <div className="rounded-lg border border-[var(--line)] bg-[var(--surface-subtle)] p-3 text-sm text-[var(--muted)]">
+        <p className="font-medium text-[var(--ink)]">Workflow rule</p>
         <p className="mt-1">Selected outcome → next step → next due date.</p>
       </div>
     </aside>
