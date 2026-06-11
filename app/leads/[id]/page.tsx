@@ -11,6 +11,7 @@ import { PageHeader } from "@/components/page-header";
 import { TaskCard } from "@/components/task-card";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { WaitingReplyPanel } from "@/components/waiting-reply-panel";
 import { prisma } from "@/lib/prisma";
 import { getAppSettings } from "@/lib/settings";
 import { renderScriptText } from "@/lib/script-renderer";
@@ -75,12 +76,49 @@ export default async function LeadDetailPage({
     notFound();
   }
 
+  const lastCompletedTask = await prisma.task.findFirst({
+    where: {
+      leadId: lead.id,
+      status: "COMPLETED",
+      stepId: { not: null },
+    },
+    include: {
+      completedOutcome: true,
+      step: {
+        include: {
+          outcomesFrom: {
+            where: { isArchived: false },
+            include: { nextStep: true },
+            orderBy: { sortOrder: "asc" },
+          },
+        },
+      },
+    },
+    orderBy: { completedAt: "desc" },
+  });
+
   const openTask = lead.tasks[0];
   const versions =
     lead.scriptVersion?.script.versions.map((version) => ({
       id: version.id,
       name: version.name,
     })) || [];
+  const replyOutcomes =
+    lead.status === "WAITING" &&
+    lastCompletedTask?.step &&
+    lastCompletedTask.completedOutcomeId
+      ? lastCompletedTask.step.outcomesFrom
+          .filter((outcome) => outcome.id !== lastCompletedTask.completedOutcomeId)
+          .map((outcome) => ({
+            id: outcome.id,
+            label: outcome.label,
+            requiresNote: outcome.requiresNote,
+            requiresDateTime: outcome.requiresDateTime,
+            requiresContact: outcome.requiresContact,
+            nextStepName: outcome.nextStep?.name,
+            isTerminal: outcome.isTerminal,
+          }))
+      : [];
 
   const timelineItems = [
     ...lead.activities.map((activity) => ({
@@ -131,6 +169,17 @@ export default async function LeadDetailPage({
           </div>
         </div>
       </Card>
+
+      {replyOutcomes.length > 0 && lastCompletedTask?.step ? (
+        <section className="space-y-4">
+          <h2 className="text-lg font-semibold text-[var(--ink)]">Waiting For Reply</h2>
+          <WaitingReplyPanel
+            leadId={lead.id}
+            sourceStepName={lastCompletedTask.step.name}
+            outcomes={replyOutcomes}
+          />
+        </section>
+      ) : null}
 
       {openTask ? (
         <section className="space-y-4">

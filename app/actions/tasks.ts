@@ -4,10 +4,15 @@ import { LeadStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
 import { getDefaultUser } from "@/lib/settings";
-import { completeTaskSchema, customOutcomeSchema } from "@/lib/validations";
+import {
+  completeTaskSchema,
+  customOutcomeSchema,
+  recordReplySchema,
+} from "@/lib/validations";
 import {
   completeTaskWithCustomOutcome,
   completeTaskWithOutcome,
+  recordLeadReply,
 } from "@/lib/workflow";
 
 export async function completeTaskAction(input: unknown) {
@@ -43,6 +48,42 @@ export async function completeTaskAction(input: unknown) {
   revalidatePath("/start-working");
   revalidatePath("/leads");
   return { success: true, message: "Task completed", error: undefined };
+}
+
+export async function recordReplyAction(input: unknown) {
+  const parsed = recordReplySchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid reply recording.", message: undefined };
+  }
+
+  const user = await getDefaultUser();
+
+  await recordLeadReply({
+    leadId: parsed.data.leadId,
+    outcomeId: parsed.data.outcomeId,
+    userId: user?.id,
+    note: parsed.data.note || undefined,
+    scheduledAt: parsed.data.scheduledAt
+      ? new Date(parsed.data.scheduledAt)
+      : undefined,
+    contact:
+      parsed.data.contactName ||
+      parsed.data.contactEmail ||
+      parsed.data.contactPhone ||
+      parsed.data.contactRole
+        ? {
+            name: parsed.data.contactName || undefined,
+            email: parsed.data.contactEmail || undefined,
+            phone: parsed.data.contactPhone || undefined,
+            role: parsed.data.contactRole || undefined,
+          }
+        : undefined,
+  });
+
+  revalidatePath("/start-working");
+  revalidatePath("/leads");
+  revalidatePath(`/leads/${parsed.data.leadId}`);
+  return { success: true, message: "Reply recorded", error: undefined };
 }
 
 export async function completeCustomOutcomeAction(input: unknown) {

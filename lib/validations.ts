@@ -46,6 +46,17 @@ export const completeTaskSchema = z.object({
   contactRole: z.string().trim().optional().or(z.literal("")),
 });
 
+export const recordReplySchema = z.object({
+  leadId: z.string().min(1),
+  outcomeId: z.string().min(1),
+  note: z.string().trim().optional().or(z.literal("")),
+  scheduledAt: z.string().optional().or(z.literal("")),
+  contactName: z.string().trim().optional().or(z.literal("")),
+  contactEmail: z.email().optional().or(z.literal("")),
+  contactPhone: z.string().trim().optional().or(z.literal("")),
+  contactRole: z.string().trim().optional().or(z.literal("")),
+});
+
 export const customOutcomeSchema = z.object({
   taskId: z.string().min(1),
   explanation: z.string().trim().min(1, "Explain what happened."),

@@ -170,6 +170,99 @@ async function createActivityAndJourneyEvent(
   });
 }
 
+async function scheduleNextStepFromOutcome(
+  tx: Tx,
+  input: {
+    leadId: string;
+    userId?: string;
+    leadStatus: LeadStatus;
+    scriptVersionId?: string | null;
+    scriptVersionNumber?: number | null;
+    currentStep?: ScriptStep | null;
+    outcome: ScriptOutcome & { nextStep?: ScriptStep | null };
+    dueAt: Date;
+    leadContactName?: string | null;
+    body?: string | null;
+  },
+) {
+  if (input.outcome.isTerminal || !input.outcome.nextStepId) {
+    await tx.lead.update({
+      where: { id: input.leadId },
+      data: {
+        status: input.leadStatus,
+        nextTaskAt: null,
+        completedAt:
+          input.leadStatus === LeadStatus.ACTIVE || input.leadStatus === LeadStatus.WAITING
+            ? null
+            : new Date(),
+      },
+    });
+
+    const terminalType =
+      input.leadStatus === LeadStatus.CLOSED_WON
+        ? JourneyEventType.CLOSED_WON
+        : input.leadStatus === LeadStatus.CLOSED_LOST
+          ? JourneyEventType.CLOSED_LOST
+          : input.leadStatus === LeadStatus.DISQUALIFIED
+            ? JourneyEventType.DISQUALIFIED
+            : JourneyEventType.TERMINAL_REACHED;
+
+    await createActivityAndJourneyEvent(tx, {
+      leadId: input.leadId,
+      userId: input.userId,
+      type: ActivityType.STATUS_CHANGED,
+      journeyType: terminalType,
+      title: `Lead marked as ${input.leadStatus.replaceAll("_", " ").toLowerCase()}`,
+      body: "No next task scheduled.",
+      step: input.currentStep,
+      outcome: input.outcome,
+      scriptVersionId: input.scriptVersionId,
+      scriptVersionNumber: input.scriptVersionNumber,
+      leadStatus: input.leadStatus,
+    });
+
+    return;
+  }
+
+  const nextStep = input.outcome.nextStep;
+
+  if (!nextStep) {
+    throw new Error("Next step is missing.");
+  }
+
+  await tx.lead.update({
+    where: { id: input.leadId },
+    data: {
+      status: input.leadStatus,
+      currentStepId: nextStep.id,
+      nextTaskAt: input.dueAt,
+      completedAt: null,
+    },
+  });
+
+  await createTaskForStep(tx, {
+    leadId: input.leadId,
+    userId: input.userId,
+    step: nextStep,
+    dueAt: input.dueAt,
+    leadContactName: input.leadContactName,
+  });
+
+  await createActivityAndJourneyEvent(tx, {
+    leadId: input.leadId,
+    userId: input.userId,
+    type: ActivityType.TASK_CREATED,
+    journeyType: JourneyEventType.NEXT_STEP_SCHEDULED,
+    title: `Next step scheduled: ${nextStep.name}`,
+    body: input.body ?? `Due on ${input.dueAt.toISOString()}.`,
+    step: nextStep,
+    outcome: input.outcome,
+    scriptVersionId: input.scriptVersionId,
+    scriptVersionNumber: input.scriptVersionNumber,
+    leadStatus: input.leadStatus,
+  });
+}
+
 export async function startLead(leadId: string, userId?: string) {
   await prisma.$transaction(async (tx) => {
     const lead = await tx.lead.findUnique({
@@ -346,86 +439,163 @@ export async function completeTaskWithOutcome(input: {
     });
 
     const nextStatus = outcome.setLeadStatus ?? task.lead.status;
-
-    if (outcome.isTerminal || !outcome.nextStepId) {
-      await tx.lead.update({
-        where: { id: task.leadId },
-        data: {
-          status: nextStatus,
-          lastContactedAt: now,
-          nextTaskAt: null,
-          completedAt:
-            nextStatus === LeadStatus.ACTIVE || nextStatus === LeadStatus.WAITING
-              ? null
-              : now,
-        },
-      });
-
-      const terminalType =
-        nextStatus === LeadStatus.CLOSED_WON
-          ? JourneyEventType.CLOSED_WON
-          : nextStatus === LeadStatus.CLOSED_LOST
-            ? JourneyEventType.CLOSED_LOST
-            : nextStatus === LeadStatus.DISQUALIFIED
-              ? JourneyEventType.DISQUALIFIED
-              : JourneyEventType.TERMINAL_REACHED;
-
-      await createActivityAndJourneyEvent(tx, {
-        leadId: task.leadId,
-        userId: input.userId,
-        type: ActivityType.STATUS_CHANGED,
-        journeyType: terminalType,
-        title: `Lead marked as ${nextStatus.replaceAll("_", " ").toLowerCase()}`,
-        body: "No next task scheduled.",
-        step: task.step,
-        outcome,
-        scriptVersionId: task.lead.scriptVersionId,
-        scriptVersionNumber: task.lead.scriptVersion?.version,
-        leadStatus: nextStatus,
-      });
-
-      return;
-    }
-
-    const nextStep = outcome.nextStep;
-
-    if (!nextStep) {
-      throw new Error("Next step is missing.");
-    }
-
     const dueAt = input.scheduledAt ?? addDays(now, outcome.delayDays);
-
     await tx.lead.update({
       where: { id: task.leadId },
       data: {
-        status: nextStatus,
-        currentStepId: nextStep.id,
-        nextTaskAt: dueAt,
         lastContactedAt: now,
-        completedAt: null,
       },
     });
 
-    await createTaskForStep(tx, {
+    await scheduleNextStepFromOutcome(tx, {
       leadId: task.leadId,
       userId: input.userId,
-      step: nextStep,
+      leadStatus: nextStatus,
+      scriptVersionId: task.lead.scriptVersionId,
+      scriptVersionNumber: task.lead.scriptVersion?.version,
+      currentStep: task.step,
+      outcome,
       dueAt,
-      leadContactName: task.lead.contactName,
+      leadContactName: input.contact?.name || task.lead.contactName,
+    });
+  });
+}
+
+export async function recordLeadReply(input: {
+  leadId: string;
+  outcomeId: string;
+  userId?: string;
+  note?: string;
+  scheduledAt?: Date;
+  contact?: {
+    name?: string;
+    email?: string;
+    phone?: string;
+    role?: string;
+  };
+}) {
+  await prisma.$transaction(async (tx) => {
+    const lead = await tx.lead.findUnique({
+      where: { id: input.leadId },
+      include: {
+        scriptVersion: true,
+        tasks: {
+          where: { status: TaskStatus.OPEN },
+          include: { step: true },
+          orderBy: { dueAt: "asc" },
+        },
+      },
+    });
+
+    if (!lead) {
+      throw new Error("Lead not found.");
+    }
+
+    const lastCompletedTask = await tx.task.findFirst({
+      where: {
+        leadId: input.leadId,
+        status: TaskStatus.COMPLETED,
+        stepId: { not: null },
+      },
+      include: {
+        step: {
+          include: {
+            outcomesFrom: {
+              where: { isArchived: false },
+            },
+          },
+        },
+        completedOutcome: true,
+      },
+      orderBy: { completedAt: "desc" },
+    });
+
+    if (!lastCompletedTask?.step || !lastCompletedTask.completedOutcomeId) {
+      throw new Error("No completed outreach step is available for reply handling.");
+    }
+
+    const outcome = await tx.scriptOutcome.findUnique({
+      where: { id: input.outcomeId },
+      include: {
+        nextStep: true,
+      },
+    });
+
+    if (!outcome || outcome.stepId !== lastCompletedTask.stepId) {
+      throw new Error("Reply outcome is not valid for the last outreach step.");
+    }
+
+    if (outcome.id === lastCompletedTask.completedOutcomeId) {
+      throw new Error("Choose a reply outcome other than the one already recorded.");
+    }
+
+    const now = new Date();
+
+    if (input.contact && Object.values(input.contact).some(Boolean)) {
+      await tx.lead.update({
+        where: { id: input.leadId },
+        data: {
+          contactName: input.contact.name || undefined,
+          email: input.contact.email || undefined,
+          phone: input.contact.phone || undefined,
+          role: input.contact.role || undefined,
+        },
+      });
+    }
+
+    if (lead.tasks.length) {
+      await tx.task.updateMany({
+        where: {
+          leadId: input.leadId,
+          status: TaskStatus.OPEN,
+        },
+        data: {
+          status: TaskStatus.CANCELLED,
+        },
+      });
+    }
+
+    const nextStatus = outcome.setLeadStatus ?? lead.status;
+    const dueAt = input.scheduledAt ?? addDays(now, outcome.delayDays);
+
+    await tx.lead.update({
+      where: { id: input.leadId },
+      data: {
+        lastContactedAt: now,
+      },
     });
 
     await createActivityAndJourneyEvent(tx, {
-      leadId: task.leadId,
+      leadId: input.leadId,
       userId: input.userId,
-      type: ActivityType.TASK_CREATED,
-      journeyType: JourneyEventType.NEXT_STEP_SCHEDULED,
-      title: `Next step scheduled: ${nextStep.name}`,
-      body: `Due on ${dueAt.toISOString()}.`,
-      step: nextStep,
+      type: ActivityType.OUTCOME_SELECTED,
+      journeyType: JourneyEventType.OUTCOME_SELECTED,
+      title: `Reply recorded: ${outcome.label}`,
+      body: input.note || `Inbound response recorded after ${lastCompletedTask.step.name}.`,
+      metadata: {
+        sourceStepId: lastCompletedTask.step.id,
+        sourceTaskId: lastCompletedTask.id,
+        cancelledTaskIds: lead.tasks.map((task) => task.id),
+        ...(input.contact ? input.contact : {}),
+      },
+      step: lastCompletedTask.step,
       outcome,
-      scriptVersionId: task.lead.scriptVersionId,
-      scriptVersionNumber: task.lead.scriptVersion?.version,
+      scriptVersionId: lead.scriptVersionId,
+      scriptVersionNumber: lead.scriptVersion?.version,
       leadStatus: nextStatus,
+    });
+
+    await scheduleNextStepFromOutcome(tx, {
+      leadId: input.leadId,
+      userId: input.userId,
+      leadStatus: nextStatus,
+      scriptVersionId: lead.scriptVersionId,
+      scriptVersionNumber: lead.scriptVersion?.version,
+      currentStep: lastCompletedTask.step,
+      outcome,
+      dueAt,
+      leadContactName: input.contact?.name || lead.contactName,
+      body: `Scheduled after inbound reply on ${now.toISOString()}.`,
     });
   });
 }
